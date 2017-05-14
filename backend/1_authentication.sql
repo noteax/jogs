@@ -1,10 +1,16 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-CREATE ROLE anonymous;
-CREATE ROLE regular_user;
-CREATE ROLE user_manager;
+CREATE ROLE authenticator NOINHERIT;
+CREATE ROLE anon;
+CREATE ROLE regular;
+CREATE ROLE manager;
 CREATE ROLE admin;
+
+GRANT anon TO authenticator;
+GRANT regular TO authenticator;
+GRANT manager TO authenticator;
+GRANT admin TO authenticator;
 
 CREATE SCHEMA hidden;
 
@@ -23,7 +29,17 @@ CREATE TYPE JWT_CLAIMS AS (
   role NAME
 );
 
-CREATE OR REPLACE FUNCTION hidden.check_role_exists()
+CREATE FUNCTION current_user_id()
+  RETURNS UUID
+STABLE
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN current_setting('request.jwt.claim.id');
+END;
+$$;
+
+CREATE FUNCTION hidden.check_role_exists()
   RETURNS TRIGGER
 LANGUAGE PLPGSQL
 AS $$
@@ -45,7 +61,7 @@ AFTER INSERT OR UPDATE ON hidden.users
 FOR EACH ROW
 EXECUTE PROCEDURE hidden.check_role_exists();
 
-CREATE OR REPLACE FUNCTION hidden.hash_pass()
+CREATE FUNCTION hidden.hash_pass()
   RETURNS TRIGGER
 LANGUAGE PLPGSQL
 AS $$
@@ -63,7 +79,7 @@ BEFORE INSERT OR UPDATE ON hidden.users
 FOR EACH ROW
 EXECUTE PROCEDURE hidden.hash_pass();
 
-CREATE OR REPLACE FUNCTION hidden.get_token(_name TEXT, _pass TEXT)
+CREATE FUNCTION hidden.get_token(_name TEXT, _pass TEXT)
   RETURNS JWT_CLAIMS
 LANGUAGE plpgsql
 AS $$
@@ -80,7 +96,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION register(_name TEXT, _pass TEXT, _role NAME)
+CREATE FUNCTION register(_name TEXT, _pass TEXT, _role NAME)
   RETURNS JWT_CLAIMS
 LANGUAGE plpgsql
 AS $$
@@ -93,7 +109,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION login(_name TEXT, _pass TEXT)
+CREATE FUNCTION login(_name TEXT, _pass TEXT)
   RETURNS JWT_CLAIMS
 LANGUAGE PLPGSQL
 AS $$

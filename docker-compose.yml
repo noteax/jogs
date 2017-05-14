@@ -3,5 +3,7 @@ version: '2'
 services:
   postgrest:
     image: begriffs/postgrest
+    links:
+      - postgres
   postgres:
     image: postgres
