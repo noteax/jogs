@@ -5,12 +5,14 @@ services:
     image: postgres:9.6
     ports:
       - 1337:5432
+    restart: always
 
   api:
     image: begriffs/postgrest:v0.4.1.0
     depends_on:
       - db
     volumes:
-      - ./postgrest.conf:/etc/postgrest.conf # use your own postgrest.conf
+      - ./postgrest.conf:/etc/postgrest.conf
     ports:
       - 3000:3000
+    restart: always

@@ -90,8 +90,8 @@ BEGIN
       name,
       role
     FROM hidden.users
-    WHERE users.name = _name AND
-          users.pass = crypt(_pass, users.pass)
+    WHERE name = _name AND
+          pass = crypt(_pass, pass)
   );
 END;
 $$;
