@@ -1,9 +1,26 @@
-version: '2'
+version: '3.0'
 
 services:
-  postgrest:
-    image: begriffs/postgrest
+  db:
+    image: postgres:9.6
+    ports:
+      - 1337:5432
+
+  api:
+    image: begriffs/postgrest:v0.4.1.0
+    volumes:
+      - ./postgrest.conf:/etc/postgrest.conf # use your own postgrest.conf
+    ports:
+      - 3000:3000
+    depends_on:
+      - db
     links:
-      - postgres
-  postgres:
-    image: postgres
+      - db
+    environment:
+      PG_ENV_POSTGRES_USER: 'postgres'
+      PG_ENV_POSTGRES_DB: 'postgres'
+
+      POSTGREST_ANONYMOUS: 'anon'
+
+      PG_PORT_5432_TCP_ADDR: 'db'
+      PG_PORT_5432_TCP_PORT: '1337'
