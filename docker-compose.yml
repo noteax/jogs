@@ -1,5 +1,7 @@
+version: '2'
+
 services:
   postgrest:
-    image: postgrest
+    image: begriffs/postgrest
   postgres:
     image: postgres

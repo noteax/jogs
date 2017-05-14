@@ -16,8 +16,12 @@ CREATE TABLE hidden.users (
   role NAME NOT NULL
 );
 
-DROP TYPE hidden.JWT_CLAIMS;
-CREATE TYPE hidden.JWT_CLAIMS AS (id UUID, role TEXT, name TEXT);
+DROP TYPE JWT_CLAIMS;
+CREATE TYPE JWT_CLAIMS AS (
+  id   UUID,
+  name TEXT,
+  role NAME
+);
 
 CREATE OR REPLACE FUNCTION hidden.check_role_exists()
   RETURNS TRIGGER
@@ -59,54 +63,52 @@ BEFORE INSERT OR UPDATE ON hidden.users
 FOR EACH ROW
 EXECUTE PROCEDURE hidden.hash_pass();
 
-CREATE OR REPLACE FUNCTION
-  hidden.user_role(a_name TEXT, a_pass TEXT)
-  RETURNS NAME
+CREATE OR REPLACE FUNCTION hidden.get_token(_name TEXT, _pass TEXT)
+  RETURNS JWT_CLAIMS
 LANGUAGE plpgsql
 AS $$
 BEGIN
   RETURN (
-    SELECT role
+    SELECT
+      id,
+      name,
+      role
     FROM hidden.users
-    WHERE users.name = a_name AND
-          users.pass = crypt(a_pass, users.pass)
+    WHERE users.name = _name AND
+          users.pass = crypt(_pass, users.pass)
   );
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION login(name TEXT, pass TEXT)
-  RETURNS hidden.JWT_CLAIMS
+CREATE OR REPLACE FUNCTION register(_name TEXT, _pass TEXT, _role NAME)
+  RETURNS JWT_CLAIMS
+LANGUAGE plpgsql
+AS $$
+DECLARE result JWT_CLAIMS;
+BEGIN
+  INSERT INTO hidden.users (name, pass, role) VALUES (_name, _pass, _role)
+  RETURNING id, name, role
+    INTO result;
+  RETURN result;
+END;
+$$;
+
+CREATE OR REPLACE FUNCTION login(_name TEXT, _pass TEXT)
+  RETURNS JWT_CLAIMS
 LANGUAGE PLPGSQL
 AS $$
 DECLARE
-  _role  NAME;
-  result hidden.JWT_CLAIMS;
+  result JWT_CLAIMS;
 BEGIN
-  SELECT hidden.user_role(name, pass)
-  INTO _role;
+  SELECT hidden.get_token(_name, _pass)
+  INTO result;
 
-  IF _role IS NULL
+  IF result IS NULL
   THEN
     RAISE invalid_password
     USING MESSAGE = 'invalid user or password';
   END IF;
 
-  SELECT
-    _role      AS role,
-    login.name AS name
-  INTO result;
-
   RETURN result;
-END;
-$$;
-
-DROP FUNCTION signup( TEXT, TEXT, NAME );
-CREATE OR REPLACE FUNCTION signup(a_name TEXT, a_pass TEXT, a_role NAME)
-  RETURNS VOID
-LANGUAGE PLPGSQL
-AS $$
-BEGIN
-  INSERT INTO hidden.users (name, pass, role)
-  VALUES (a_name, a_pass, a_role);
 END;
 $$;
