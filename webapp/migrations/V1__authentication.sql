@@ -22,7 +22,6 @@ CREATE TABLE hidden.users (
   role NAME NOT NULL
 );
 
-DROP TYPE JWT_CLAIMS;
 CREATE TYPE JWT_CLAIMS AS (
   id   UUID,
   name TEXT,

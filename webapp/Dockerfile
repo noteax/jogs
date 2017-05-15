@@ -31,7 +31,7 @@ ADD postgrest.conf /etc/postgrest.conf
 
 # wait for postgres/start flyway/postgrest
 CMD /wait-for-it.sh db:5432 -t 30 && \
-    flyway -url=jdbc:postgresql://db:5432/postgres -user=postgres -password=pgpassword -locations=filesystem:/migrations migrate && \
+    flyway -url=jdbc:postgresql://db:5432/postgres -user=postgres -password=postgres -locations=filesystem:/migrations migrate && \
     exec postgrest /etc/postgrest.conf
 
 EXPOSE 3000

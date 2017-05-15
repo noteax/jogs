@@ -5,7 +5,7 @@ services:
     image: postgres:9.6
     environment:
      - POSTGRES_USER=postgres
-     - POSTGRES_PASSWORD=pgpassword
+     - POSTGRES_PASSWORD=postgres
   webapp:
     build: webapp
     depends_on:
