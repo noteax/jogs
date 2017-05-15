@@ -3,16 +3,12 @@ version: '3.0'
 services:
   db:
     image: postgres:9.6
-    ports:
-      - 1337:5432
-    restart: always
-
-  api:
-    image: begriffs/postgrest:v0.4.1.0
+    environment:
+     - POSTGRES_USER=postgres
+     - POSTGRES_PASSWORD=pgpassword
+  webapp:
+    build: webapp
     depends_on:
       - db
-    volumes:
-      - ./postgrest.conf:/etc/postgrest.conf
     ports:
       - 3000:3000
-    restart: always
